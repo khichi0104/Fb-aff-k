@@ -23,41 +23,42 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
-    input {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 15px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      background: #ff80ab;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    button:hover {
+    input, button {
+  width: 100%;
+  box-sizing: border-box; /* ให้รวม padding+border ใน width */
+}
+
+input {
+  padding: 8px;
+  margin-bottom: 15px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+}
+
+button {
+  padding: 10px;
+  margin-bottom: 15px;
+  font-size: 16px;
+  background: #ff80ab;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
       background: #ff4d94;
     }
-    .result {
-      margin-top: 20px;
-      padding: 10px;
-      background: #f9f9f9;
-      border-radius: 8px;
-      word-break: break-all;
+
+.clear-button {
+      background: rgb(125, 119, 119);
     }
-    .copy-status {
-      margin-top: 10px;
-      color: green;
-      font-size: 14px;
-      display: none;
-    }
+.clear-button:hover {
+      background: black;
+    }    
+
 </style>
 
 </head>
@@ -67,64 +68,77 @@
     <input type="text" id="linkInput1" placeholder="ใส่ลิงก์หรือข้อความ ช่องที่ 1">
     <input type="text" id="linkInput2" placeholder="ใส่ลิงก์หรือข้อความ ช่องที่ 2">
     <button onclick="generateLinks()">สร้างลิงก์</button>
+    <button class="clear-button" onclick="clearInputs()">Clear</button>
     <div id="output" class="result"></div>
-    <div id="copyStatus" class="copy-status">คัดลอกแล้ว!</div>
+    <div id="copyStatus" class="copy-status"></div>
   </div>
 
   <script>
-    function getEmoji(text) {
-      const lower = text.toLowerCase();
-      if (lower.includes("lazada")) return "💙 ";
-      if (lower.includes("shopee")) return "🍊 ";
-      return "";
+  function getEmoji(text) {
+    const lower = text.toLowerCase();
+    if (lower.includes("lazada")) return "💙 ";
+    if (lower.includes("shopee")) return "🍊 ";
+    return "👉 "; // กรณีไม่เข้าเงื่อนไข
+  }
+
+  function clearInputs() {
+    document.getElementById("linkInput1").value = "";
+    document.getElementById("linkInput2").value = "";
+    document.getElementById("output").innerHTML = "";
+    const copyStatus = document.getElementById("copyStatus");
+    copyStatus.style.display = "none";
+    document.getElementById('insert1').focus();
+  }
+
+  async function generateLinks() {
+    const base = "https://www.facebook.com/flx/warn/?u=";
+    const val1 = document.getElementById("linkInput1").value.trim();
+    const val2 = document.getElementById("linkInput2").value.trim();
+    const output = document.getElementById("output");
+    const copyStatus = document.getElementById("copyStatus");
+    copyStatus.style.display = "none";
+
+    if (!val1 && !val2) {
+      output.innerHTML = "กรุณาใส่ลิงก์อย่างน้อย 1 ช่อง";
+      return;
     }
 
-    async function generateLinks() {
-      const base = "https://www.facebook.com/flx/warn/?u=";
-      const val1 = document.getElementById("linkInput1").value.trim();
-      const val2 = document.getElementById("linkInput2").value.trim();
-      const output = document.getElementById("output");
-      const copyStatus = document.getElementById("copyStatus");
-      copyStatus.style.display = "none";
+    let resultHtml = "";
+    let copyText = "";
 
-      if (!val1 && !val2) {
-        output.innerHTML = "กรุณาใส่ลิงก์อย่างน้อย 1 ช่อง";
-        return;
-      }
-
-      let resultHtml = "";
-      let copyText = "";
-
-      function processValue(val) {
-        const url = base + val;
-        const emoji = getEmoji(val);
-        resultHtml += `<div>${emoji}<a href="${url}" target="_blank">${url}</a></div>`;
-        copyText += emoji + url + "\n";
-      }
-
-      if (val1) processValue(val1);
-      if (val2) processValue(val2);
-
-      output.innerHTML = resultHtml;
-
-      // คัดลอกไป clipboard
-      try {
-        await navigator.clipboard.writeText(copyText.trim());
-        copyStatus.style.display = "block";
-        setTimeout(() => { copyStatus.style.display = "none"; }, 2000);
-      } catch (err) {
-        copyStatus.style.display = "block";
-        copyStatus.style.color = "red";
-        copyStatus.innerText = "คัดลอกไม่สำเร็จ";
-      }
+    function processValue(val) {
+      const url = base + val;
+      const emoji = getEmoji(val);
+      resultHtml += `<div>${emoji}<a href="${url}" target="_blank">${url}</a></div>`;
+      copyText += emoji + url + "\n";
     }
 
-    // Enter = กดปุ่ม
-    document.addEventListener("keypress", function(e) {
-      if (e.key === "Enter") {
-        generateLinks();
-      }
-    });
-  </script>
+    if (val1) processValue(val1);
+    if (val2) processValue(val2);
+
+    output.innerHTML = resultHtml;
+
+    // คัดลอกไป clipboard
+    try {
+      await navigator.clipboard.writeText(copyText.trim());
+      copyStatus.style.display = "block";
+      copyStatus.style.color = "green";
+      copyStatus.innerText = "คัดลอกแล้ว!";
+      setTimeout(() => { copyStatus.style.display = "none"; }, 2000);
+    } catch (err) {
+      copyStatus.style.display = "block";
+      copyStatus.style.color = "red";
+      copyStatus.innerText = "คัดลอกไม่สำเร็จ";
+    }
+  }
+
+  // Enter = กดปุ่ม
+  document.addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+      generateLinks();
+    }
+  });
+</script>
+
 </body>
 </html>
